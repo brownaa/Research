@@ -1,4 +1,4 @@
-
+source("./src/01 Initialization.R")
 # Load a test network -----------------------------------------------------
 # in this section we load a test network in order to test the heuristic 
 # load balancing 
@@ -15,14 +15,14 @@ demand_met <- loadBalance(el,nodes)
 ## ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ##
 loadBalance <- function ( el, nodes){
 	g <- graph.data.frame(el,directed=TRUE, vertices=nodes)	#builds the network in igraph format
-	l <- layout.fruchterman.reingold(g)
-	E(g)$width <- E(g)$Constraint / 2
+	#l <- layout.fruchterman.reingold(g)											#defines a layout; this one is fairly readible
+	#later we can define the location of the network based on actual lat/long coordinates
+	E(g)$width <- rescale(E(g)$Constraint,to=c(0.5,10))
 	V(g)$color <- ifelse(V(g)$Supply > 0, "lightgreen","red")
-	fin <- FALSE
 	zzz <- 1
-# 	png(file=paste("./reports/Load Balancing Results/", zzz, ".png", sep=""))
-#  	plot(g, layout=l, main=paste("State of the Network: ", zzz))
-# 	dev.off()
+	png(file=paste("./reports/Load Balancing Results/", zzz, ".png", sep=""))
+ 	plot(g, layout=l, main=paste("State of the Network: ", zzz))
+	dev.off()
 	nodePriority <- sort(V(g)$Demand, decreasing=TRUE, index.return=TRUE)$ix	#assigns priority by greatest demand
 	nodePriority <- nodePriority[as.numeric(V(g)[Demand>0]$name)]
 	for (i in 1:length(nodePriority)){
@@ -68,11 +68,6 @@ loadBalance <- function ( el, nodes){
 					E(g,path=x[["res"]][[k]])$Constraint <- E(g,path=x[["res"]][[k]])$Constraint - m.min
 					E(g)$width <- E(g)$Constraint / 2
 					
-					zzz <- zzz + 1
-# 					png(file=paste("./reports/Load Balancing Results/", zzz," - ", paste(x[["res"]][[k]],collapse=""), ".png", sep=""))
-# 					plot(g, layout=l, main=paste("State of the Network: ", zzz))
-# 					dev.off()		
-					
 					if(demand == m.min){													# if demand is met we exit loops and switch demand nodes
 						k <- xl	
 						j <- length(s.nodes)
@@ -81,15 +76,23 @@ loadBalance <- function ( el, nodes){
 						if(min(E(g,path=x[["res"]][[k]])$Constraint) == 0){
 						k <- xl
 						j <- j - 1
-					}
+					}					
+					path <- paste(x[["res"]][[k]],collapse="")
+					
+					## deleting edges that are 0
+					g <- delete.edges(g,E(g)[E(g)$Constraint==0])
+					
+					zzz <- zzz + 1
+					png(file=paste("./reports/Load Balancing Results/", zzz," - ", path, ".png", sep=""))
+					plot(g, layout=l, main=paste("State of the Network: ", zzz))
+					dev.off()		
+					
 					k <- k + 1
 				}
 			}
 			j <- j + 1
-			
 		}	
 	}
-
 	x <- data.frame(Node=nodes$Node, Demand=nodes$Demand, 
 									Remaining=get.data.frame(g,what="vertices")$Demand)
 	return(x)

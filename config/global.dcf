@@ -3,6 +3,6 @@ cache_loading: on
 munging: on
 logging: off
 load_libraries: on
-libraries: reshape2, ggplot2, network, RCurl, igraph
+libraries: reshape2, ggplot2, RCurl, igraph, scales
 as_factors: on
 data_tables: off
